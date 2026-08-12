@@ -11,6 +11,8 @@ export const EMPTY_FILTERS = {
   categories: [],
   fromDate: "",
   toDate: "",
+  uploadedFrom: "",
+  uploadedTo: "",
   phone: "",
   error: "",
   search: "",
@@ -78,6 +80,24 @@ export default function FilterBar({ facets, chunks, value, onApply, onReset }) {
             className="input"
             value={draft.toDate}
             onChange={(e) => set("toDate", e.target.value)}
+          />
+        </div>
+        <div>
+          <span className="label">Uploaded from</span>
+          <input
+            type="date"
+            className="input"
+            value={draft.uploadedFrom}
+            onChange={(e) => set("uploadedFrom", e.target.value)}
+          />
+        </div>
+        <div>
+          <span className="label">Uploaded to</span>
+          <input
+            type="date"
+            className="input"
+            value={draft.uploadedTo}
+            onChange={(e) => set("uploadedTo", e.target.value)}
           />
         </div>
 
