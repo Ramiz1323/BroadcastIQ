@@ -2,7 +2,7 @@ const path = require("path");
 const XLSX = require("xlsx");
 const { parse: parseCsvSync } = require("csv-parse/sync");
 
-const SUPPORTED = [".csv", ".xlsx"];
+const SUPPORTED = [".csv", ".xlsx", ".xls"];
 
 function extensionOf(filename) {
   return path.extname(String(filename || "")).toLowerCase();
@@ -26,22 +26,43 @@ function parseCsvBuffer(buffer) {
 }
 
 function parseExcelBuffer(buffer) {
-  const wb = XLSX.read(buffer, { type: "buffer" });
+  const wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
   const sheetName = wb.SheetNames[0];
   if (!sheetName) return { headers: [], rows: [] };
   const sheet = wb.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-  const headers = rows.length ? Object.keys(rows[0]) : [];
+  const rows = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
+  const headerRow = XLSX.utils.sheet_to_json(sheet, { header: 1, range: 0 })[0] || [];
+  const headers = rows.length
+    ? Object.keys(rows[0])
+    : headerRow.map((h) => String(h));
   return { headers, rows };
 }
 
+/**
+ * Parses a CSV/XLS/XLSX buffer into { headers, rows }.
+ */
 function parseFile(buffer, filename) {
   const ext = extensionOf(filename);
   if (!SUPPORTED.includes(ext)) {
-    throw new Error(`Unsupported extension: ${ext}`);
+    const err = new Error(`File type not supported: ${ext || "unknown"}. Use CSV, XLS or XLSX.`);
+    err.statusCode = 400;
+    throw err;
   }
-  const result = ext === ".csv" ? parseCsvBuffer(buffer) : parseExcelBuffer(buffer);
-  return result;
+
+  try {
+    const result = ext === ".csv" ? parseCsvBuffer(buffer) : parseExcelBuffer(buffer);
+    // strip fully-empty rows
+    result.rows = result.rows.filter((row) =>
+      Object.values(row).some((v) => String(v == null ? "" : v).trim() !== "")
+    );
+    return result;
+  } catch (e) {
+    const err = new Error(
+      ext === ".csv" ? "Invalid CSV file. Could not parse contents." : "Invalid Excel file."
+    );
+    err.statusCode = 400;
+    throw err;
+  }
 }
 
 module.exports = { parseFile, isSupported, extensionOf, SUPPORTED };
