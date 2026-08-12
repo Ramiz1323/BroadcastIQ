@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -9,10 +9,13 @@ import {
   Upload,
   Settings as SettingsIcon,
   Menu,
+  X,
   Moon,
   Sun,
+  Database,
 } from "lucide-react";
 import useTheme from "../hooks/useTheme.js";
+import { health } from "../services/api.js";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -27,6 +30,21 @@ const NAV = [
 export default function DashboardLayout() {
   const { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false);
+  const [dbStatus, setDbStatus] = useState("checking");
+
+  useEffect(() => {
+    let alive = true;
+    const check = () =>
+      health()
+        .then((res) => alive && setDbStatus(res.data.database))
+        .catch(() => alive && setDbStatus("disconnected"));
+    check();
+    const id = setInterval(check, 30000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, []);
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -39,6 +57,7 @@ export default function DashboardLayout() {
           <p className="text-xs text-slate-400">Broadcast reports</p>
         </div>
       </div>
+
       <nav className="flex-1 space-y-1 px-3">
         {NAV.map((item) => (
           <NavLink
@@ -59,6 +78,26 @@ export default function DashboardLayout() {
           </NavLink>
         ))}
       </nav>
+
+      <div className="border-t border-slate-200 px-5 py-4 dark:border-slate-800">
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <Database className="h-3.5 w-3.5" />
+          <span
+            className={`h-2 w-2 rounded-full ${
+              dbStatus === "connected"
+                ? "bg-green-500"
+                : dbStatus === "checking"
+                  ? "bg-amber-400"
+                  : "bg-red-500"
+            }`}
+          />
+          {dbStatus === "connected"
+            ? "MongoDB Connected"
+            : dbStatus === "checking"
+              ? "Checking connection…"
+              : "MongoDB Disconnected"}
+        </div>
+      </div>
     </div>
   );
 
@@ -67,6 +106,7 @@ export default function DashboardLayout() {
       <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 lg:block">
         {sidebar}
       </aside>
+
       {open ? (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-slate-900/50" onClick={() => setOpen(false)} />
@@ -75,6 +115,7 @@ export default function DashboardLayout() {
           </aside>
         </div>
       ) : null}
+
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
           <button className="btn-ghost px-2 py-1.5 lg:hidden" onClick={() => setOpen(true)}>
@@ -89,6 +130,7 @@ export default function DashboardLayout() {
             </button>
           </div>
         </header>
+
         <main className="flex-1 p-4 sm:p-6">
           <Outlet />
         </main>
