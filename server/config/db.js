@@ -11,8 +11,7 @@ async function connectDB() {
   mongoose.set("strictQuery", true);
 
   await mongoose.connect(uri, {
-    dbName: "monitor",
-    maxPoolSize: 20,
+    dbName: "broadcastiq",
     serverSelectionTimeoutMS: 15000,
   });
 
