@@ -32,5 +32,10 @@ const deliverySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+deliverySchema.index({ chunkId: 1, status: 1 });
+deliverySchema.index({ broadcastName: 1, status: 1 });
+deliverySchema.index({ deliveryDateTime: -1 });
+deliverySchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model("Delivery", deliverySchema);
 module.exports.STATUSES = STATUSES;
