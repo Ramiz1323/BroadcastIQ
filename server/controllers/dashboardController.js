@@ -85,4 +85,33 @@ const stats = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { stats };
+const chunkPerformance = asyncHandler(async (req, res) => {
+  const limit = Math.min(30, Math.max(1, parseInt(req.query.limit, 10) || 10));
+  const rows = await Delivery.aggregate([
+    {
+      $group: {
+        _id: { chunkId: "$chunkId", chunkName: "$chunkName" },
+        total: { $sum: 1 },
+        delivered: { $sum: { $cond: [{ $eq: ["$status", "Delivered"] }, 1, 0] } },
+        read: { $sum: { $cond: [{ $eq: ["$status", "Read"] }, 1, 0] } },
+        failed: { $sum: { $cond: [{ $eq: ["$status", "Failed"] }, 1, 0] } },
+      },
+    },
+    { $sort: { total: -1 } },
+    { $limit: limit },
+  ]);
+
+  res.json({
+    success: true,
+    data: rows.map((r) => ({
+      chunkId: r._id.chunkId,
+      chunkName: r._id.chunkName || "Unnamed chunk",
+      total: r.total,
+      delivered: r.delivered,
+      read: r.read,
+      failed: r.failed,
+    })),
+  });
+});
+
+module.exports = { stats, chunkPerformance };
