@@ -9,6 +9,7 @@ export const EMPTY_FILTERS = {
   templateNames: [],
   statuses: [],
   categories: [],
+  deliveryDate: "",
   fromDate: "",
   toDate: "",
   uploadedFrom: "",
@@ -64,6 +65,15 @@ export default function FilterBar({ facets, chunks, value, onApply, onReset }) {
           onChange={(v) => set("statuses", v)}
         />
 
+        <div>
+          <span className="label">Delivery date (exact)</span>
+          <input
+            type="date"
+            className="input"
+            value={draft.deliveryDate}
+            onChange={(e) => set("deliveryDate", e.target.value)}
+          />
+        </div>
         <div>
           <span className="label">Delivery from</span>
           <input
