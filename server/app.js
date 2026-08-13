@@ -16,6 +16,8 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 const allowedOrigins = clientUrl.split(",").map((o) => o.trim()).filter(Boolean);
 
