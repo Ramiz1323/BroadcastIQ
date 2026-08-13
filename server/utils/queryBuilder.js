@@ -49,10 +49,20 @@ function buildDeliveryFilter(query = {}) {
   const categories = toArray(query.categories);
   if (categories.length) filter.category = { $in: categories };
 
+  // Exact delivery-date match (single day)
+  const exactDay = parseDateInput(query.deliveryDate, false);
+  if (exactDay) {
+    const start = new Date(exactDay);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(exactDay);
+    end.setHours(23, 59, 59, 999);
+    filter.deliveryDateTime = { $gte: start, $lte: end };
+  }
+
   const from = parseDateInput(query.fromDate, false);
   const to = parseDateInput(query.toDate, true);
   if (from || to) {
-    filter.deliveryDateTime = {};
+    filter.deliveryDateTime = filter.deliveryDateTime || {};
     if (from) filter.deliveryDateTime.$gte = from;
     if (to) filter.deliveryDateTime.$lte = to;
   }
